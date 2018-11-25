@@ -458,6 +458,7 @@ void processTerminalCommands()
   else if( commandBuffer.startsWith(F("si")) )  // system info
   {
     printTime(true);
+    printTemp();
     printBandInfo();
   }
   else if( commandBuffer.startsWith(F("bhe")) ) // band hopping enable 
@@ -482,8 +483,9 @@ void processTerminalCommands()
   else if( commandBuffer.startsWith(F("temperature")) )
   {
     int16_t temperature = Ds3231::getTemperature();
-    Serial.print(F("temperature="));
-    Serial.print(temperature);
+    Serial.print(F("Temperature="));
+    Serial.print(temperature*0.01);
+    Serial.print(F(" C"));
     Serial.println();
   }
   
@@ -529,6 +531,15 @@ void printBandInfo()
   Serial.print(F("\n"));
 }
 
+//--------------------------------------------------
+void printTemp()
+{
+    int16_t temperature = Ds3231::getTemperature();
+    Serial.print(F("Temperature="));
+    Serial.print(temperature*0.01);
+    Serial.print(F(" C"));
+    Serial.print(F("\n"));
+}
 //----------------------------------------------------------
 void setSymbol(unsigned symbol)
 {
