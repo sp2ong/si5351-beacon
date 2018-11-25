@@ -35,7 +35,7 @@ start | Start transmission | start
 stop | Terminate transmission | stop
 activate | Activate autostart TX mode | activate
 deactivate | Deactivate autostart TX mode | deactivate
-si | Show system info (time+launch time) | si
+si | Show system info (time+temperature+launch time) | si
 bhe | Band hopping enable | bhe
 bhd | Band hopping disable | bhd
 nb | Next band (useful when band hopping is disabled) | nb
