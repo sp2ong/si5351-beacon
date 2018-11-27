@@ -7,6 +7,7 @@
 #include <stdint.h>
 #include "jt_band_params.h"
 
+// Define of XTAL SI5351 
 #define XTAL_FREQUENCY_IN_KHZ (27000)
 
 //--------------------------------------------------------------------------------
