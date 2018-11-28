@@ -125,8 +125,8 @@ int Ds3231::getTemperature()
     int fraqtionalValue = buf[1] >> 6;
     int res = integerValue * 100 + fraqtionalValue * 25;
     if(isNegative)
-        res = -1 * res;
-    return res;
+        res = -0.01 * res;
+    return res * 0.01;
 }
 
 
