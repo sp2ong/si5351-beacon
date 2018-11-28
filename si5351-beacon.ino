@@ -484,7 +484,7 @@ void processTerminalCommands()
   {
     int16_t temperature = Ds3231::getTemperature();
     Serial.print(F("Temperature="));
-    Serial.print(temperature*0.01);
+    Serial.print(temperature);
     Serial.print(F(" C"));
     Serial.println();
   }
@@ -521,8 +521,32 @@ void printBandInfo()
 {
   Serial.print(F("\nCurrent band: Index="));
   Serial.print(currentBandIndex);
-  Serial.print(F("; mode="));
-  Serial.print((int)bandParams.getJTMode());
+  Serial.print(F("; Mode="));
+  
+  JTMode jtmode = bandParams.getJTMode();
+  const char* strmode = 0;
+  if( jtmode == Mode_WSPR2 )
+  {
+    strmode = "WSPR2";
+  }
+  else if( jtmode == Mode_JT65_A )
+  {
+    strmode = "JT65A";
+  }
+  else if( jtmode == Mode_JT65_B )
+  {
+    strmode = "JT65B";
+  }
+
+  if( strmode )
+  {
+    Serial.print(strmode);  
+  }
+  else
+  {
+    Serial.print((int)jtmode);  
+  }
+
   Serial.print(F("; F="));
   Serial.print(bandParams.approxFrequencyInMHz());
   Serial.print(F(" MHz"));
@@ -536,7 +560,7 @@ void printTemp()
 {
     int16_t temperature = Ds3231::getTemperature();
     Serial.print(F("Temperature="));
-    Serial.print(temperature*0.01);
+    Serial.print(temperature);
     Serial.print(F(" C"));
     Serial.print(F("\n"));
 }
