@@ -47,9 +47,10 @@ Command `setdate` - in-chip datetime will be updated as soon as you hit enter.
 
 You can set or update Time from Linux computer which have time sync via NTP use follwoing command:
 
-sudo stty -F /dev/ttyUSB0 ispeed 9600 ospeed 9600 -ignpar cs8 -cstopb -echo -hupcl
+**sudo stty -F /dev/ttyUSB0 ispeed 9600 ospeed 9600 -ignpar cs8 -cstopb -echo -hupcl**
 
-sudo date +"setdate %F %H:%M:%S" >/dev/ttyUSB0
+**sudo date +"setdate %F %H:%M:%S" >/dev/ttyUSB0**
+
 
 
 ![Block diagram](https://2.bp.blogspot.com/-hdYOkN2AvIw/VybUynSdfFI/AAAAAAAAAJ8/lczwSbtwa54h3cWx3Q5UmBE4t_etAARygCLcB/s320/arduino-ds3231-si5351.png)
