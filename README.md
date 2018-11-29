@@ -45,11 +45,12 @@ setdate | update time in Ds3231 chip | setdate 2016-05-01 12:35:30
 Please configure terminal with **newline**  termination.
 Command `setdate` - in-chip datetime will be updated as soon as you hit enter.
 
-You can set or update Time from Linux computer which have time sync via NTP use follwoing command:
+You can set or update Time from Linux computer which have time sync via NTP use following commands:
 
 **sudo stty -F /dev/ttyUSB0 ispeed 9600 ospeed 9600 -ignpar cs8 -cstopb -echo -hupcl**
 
 **sudo date +"setdate %F %H:%M:%S" >/dev/ttyUSB0**
+
 
 
 
