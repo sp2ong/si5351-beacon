@@ -14,14 +14,14 @@ Key features:
 * Internal encoder for WSPR and ISCAT.
 * Simple "in code configuration".
 * Useful on-line mode configurator.
-* TX start is controlled by extremely accurate I2C real-time clock Ds3231.
+* TX start is controlled by extremely accurate I2C real-time clock Ds3231 or GPS
 * Terminal-based command line interface.
 * Support band-hopping with LPF auto selection.
 * Pin-compliant with QRP-LABS Arduino shield and relay-switch board.
 
 To configure base frequency, step of FSK manipulation, T/R interval, mode - please use javascript based configurator: http://ra9yer.blogspot.com/p/si5351-configurator.html or open local configurator : ./doc/band_configurator.html 
 
-The WSPR beacon message in defined directly  in the code in text form. Please use command-line utilities _jt65code_, _jt4code_,  _jt9code_ to generate symbol stream for these modes.
+The WSPR beacon message in defined directly  in the code in text form. Please use command-line utilities _jt65code_, _jt4code_,  _jt9code_ (included with WSJTX software) to generate symbol stream for these modes.
 
 Updated at Jenuary 2017. Experimental feature: GPS module instead of DS3231. Please see macros TIME_SLICE_GPS/TIME_SLICE_DS3231 in si5351-beacon.ino file.
 
@@ -42,9 +42,14 @@ nb | Next band (useful when band hopping is disabled) | nb
 temperature | show current temperature measured by Ds3231 | temperature 
 setdate | update time in Ds3231 chip | setdate 2016-05-01 12:35:30
 
-
 Please configure terminal with **newline**  termination.
 Command `setdate` - in-chip datetime will be updated as soon as you hit enter.
+
+You can set or update Time from Linux computer which have time sync via NTP use follwoing command:
+
+sudo stty -F /dev/ttyUSB0 ispeed 9600 ospeed 9600 -ignpar cs8 -cstopb -echo -hupcl
+sudo date +"setdate %F %H:%M:%S" >/dev/ttyUSB0
+
 
 ![Block diagram](https://2.bp.blogspot.com/-hdYOkN2AvIw/VybUynSdfFI/AAAAAAAAAJ8/lczwSbtwa54h3cWx3Q5UmBE4t_etAARygCLcB/s320/arduino-ds3231-si5351.png)
 
