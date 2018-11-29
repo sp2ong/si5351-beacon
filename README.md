@@ -63,8 +63,8 @@ The project was tested in Arduino 1.6.7 development environment. If you have any
 
 
 Si5351 module, arduio-shield, LPF's, relay-switched board was purchased from http://www.qrp-labs.com  
-Ds3231 module - from aliexpress.  
-Arduino Leonardo - from local shop.  
+Ds3231 module   
+Arduino Uno or Leonardo  
 
 Link to blog post: http://ra9yer.blogspot.com/2016/05/arduino-si5351-beacon.html  
 Link to forum thread http://forum.22dx.ru/viewtopic.php?f=15&t=152  
