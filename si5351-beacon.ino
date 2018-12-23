@@ -1,7 +1,30 @@
-
+/* 
+ * 
+ D0/RX   Serial with USB console Arduino UNO
+ D1/TX   Serial with USB console Arduino UNO
+ D2  
+ D3  
+ D4  
+ D5  
+ D6  
+ D7  
+ D8  1pps input DS3231
+ D9  
+ D10  
+ D11  
+ D12    Band Select 0
+ D13    Band Select 1
+ A0/D14 Band Select 2
+ A1/D15 Band Select 3
+ A2/D16 Band Select 4
+ A3/D17 Band Select 5              
+ A4/D18 Si5351 SDA
+ A5/D19 Si5351 SCL 
+ 
+ ----------------------------------------------------------------
+ */
 #include "src/si5351/si5351.h"
 #include "src/time/time_slice_ds3231.h"
-#include "src/time/time_slice_gps.h"
 #include "src/time/rtc_datetime.h"
 #include "src/time/ds3231.h"
 #include "src/utils/symbol_rate.h"
@@ -17,6 +40,7 @@
 
 // ---------------- Global Variables -----------------
 
+
 Si5351 si5351(0);
 SymbolRate symbolRate;
 CCommandBuffer commandBuffer;
@@ -30,6 +54,8 @@ JT65Encoder jt65Coder;
 JTMockEncoder jt4Coder;
 JTMockEncoder jt9Coder;
 JTISCATEncoder jtISCATCoder;
+
+int Mode;
 
 unsigned prevSymbolIndex;
 unsigned char prevSymbolValue;
@@ -70,34 +96,35 @@ struct LPF_Band_Matching
 };
 
 
+
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 // ---- Arduino pin configuration ---
 
 const int pinLED = LED_BUILTIN; // duplicate 1pps
-const int pin1PPS = 4; // <-- 1pps signal from ds3231 (actual only if ds3131 is using)
+const int pin1PPS = 8; // <-- 1pps signal from ds3231 (actual only if ds3231 is using)
 
 
 // Active LOW relay pins as on QRP-LABS relay-switched LPF kit
-const int pinBAND0 = 7;
-const int pinBAND1 = A0;
-const int pinBAND2 = 10;
-const int pinBAND3 = 11;
+const int pinBAND0 = A0;
+const int pinBAND1 = A1;
+const int pinBAND2 = A2;
+const int pinBAND3 = A3;
 const int pinBAND4 = 12;
-const int pinBAND5 = A3;
+const int pinBAND5 = 13;
 
 
 // ----- Configure mapping: RF_Band -> Relay_switch_board_LPF  -----
-LPF_Band_Matching relaySwitchBandMatching [] = { 
-  {RF_Band_40m, FILTER_BAND_5},
-  {RF_Band_30m, FILTER_BAND_3},
+LPF_Band_Matching relaySwitchBandMatching [] = {
+  {RF_Band_40m, FILTER_BAND_0}, 
+  {RF_Band_30m, FILTER_BAND_1},
   {RF_Band_20m, FILTER_BAND_2},
-  {RF_Band_15m, FILTER_BAND_1},
-  {RF_Band_15m, FILTER_BAND_1}
+  {RF_Band_10m, FILTER_BAND_3},
+  {RF_Band_2m, FILTER_BAND_5}
   
 };
 
-const FilterBand DefaultFilterBand = FILTER_BAND_0; // default band if none of relaySwitchBandMatching[] matched.
+const FilterBand DefaultFilterBand = FILTER_BAND_2; // default band if none of relaySwitchBandMatching[] matched.
 
 // ----------- Startup Parameters  ------------------------------
 
@@ -113,6 +140,7 @@ const PROGMEM unsigned char MSG_JT9[] = {0,0,3,6,0,7,3,4,7,0,7,3,2,4,8,0,3,2,4,1
 const PROGMEM unsigned char MSG_JT4[] = {};
 
 
+
 //---------- Begin Band Configuration  ----------------------
 
 size_t currentBandIndex = 0; // <--- Band index at power-on in the array below (zero-based)
@@ -122,51 +150,44 @@ size_t currentBandIndex = 0; // <--- Band index at power-on in the array below (
 // Local configurator:  ./doc/band_configurator.html 
 // Configurator in the Net:  http://ra9yer.blogspot.com/p/si5351-configurator.html
 //
-
+// Examples define 3 bands with si5351 25 MHz XTAL 
+// In the si5351 beacon you must enter the actual transmit frequency. You must add 1500Hz 
+// to the dial frequencies listed on WSPRnet. Or rather: 1400Hz to 1600Hz since the listed frequency is the centre of the 200Hz WSPR band. 
+// http://wsprnet.org/drupal/node/7352
+//
 JTBandDescr bandDescrArray[] = {
-    {Mode_JT65_B, 32, 28943, 836045, 6, 1, 441, 163840, 60} // f=144.1777 MHz; JT65B; step=5.383Hz; 2.692baud; T/R=1m
-  , {Mode_WSPR2, 31, 154287, 614418, 30, 1, 12, 8192, 120} // f=28.126 MHz; WSPR2; step=1.465Hz; 1.465baud; T/R=2m};
+    {Mode_WSPR2, 35, 65234, 135453, 126, 1, 12, 8192, 120} // f=7.04 MHz; WSPR2; step=1.465Hz; 1.465baud; T/R=2m
+   ,{Mode_WSPR2, 35, 134433, 193945, 88, 1, 12, 8192, 120} // f=10.1401 MHz; WSPR2; step=1.465Hz; 1.465baud; T/R=2m
+   ,{Mode_WSPR2, 34, 264420, 275277, 62, 1, 12, 8192, 120} // f=14.097 MHz; WSPR2; step=1.465Hz; 1.465baud; T/R=2m
+   ,{Mode_WSPR2, 33, 427361, 568905, 30, 1, 12, 8192, 120} // f=28.126 MHz; WSPR2; step=1.465Hz; 1.465baud; T/R=2m
 };
-
 //----------  End Configuration ------------------------
+
+
 
 const size_t NumBandsTotal = sizeof(bandDescrArray) / sizeof(bandDescrArray[0]); // Calc number of bands at compile time. Used for band hopping.
 
 
-// ---------- Time Source Configuration. Either GPS module or DS3231.
+// ---------- Time Source Configuration  DS3231.
 // 
-// Here you need to select either DS3231 or GPS module. Please comment one and leave another one uncommented.
-//
-//#define TIME_SLICE_GPS
 #define TIME_SLICE_DS3231
-
-
-#if (!defined(TIME_SLICE_GPS) && !defined(TIME_SLICE_DS3231)) || (defined(TIME_SLICE_GPS) && defined(TIME_SLICE_DS3231))
-#error "Please define either TIME_SLICE_GPS or TIME_SLICE_DS3131"
-#endif
-
-#if defined(TIME_SLICE_GPS)
-HardwareSerial& gpsSerial = Serial1; // <--- Specify serial port for GPS NMEA module here
-TimeSliceGPS timeSlice(gpsSerial);
-#endif
-
-#if defined(TIME_SLICE_DS3231)
 TimeSliceDS3231 timeSlice(pin1PPS);
-#endif
 
 
 // ------ Message initialize functions ----- 
 
 //--------------------------------------------------
+//
+//  WSPR message defined here: CALLSIGN, GRID, POWER TX in dBm, Si5351 without BS-170: ~ 10 = 0.01 W, with the one BS-170 ~ 20 = 100 mW,  http://niviuk.free.fr/dbm_watts.php
+
 void initializeWSPRCoder()
 {
-  wsprCoder.encodeMessage( "AA0AAA", "NO13", 10 );    // <---- WSPR message defined here.
+  wsprCoder.encodeMessage( "SP2ABC", "JO93", 20 );    
 }
-
 //--------------------------------------------------
 void initializeISCATCoder()
 {
-  jtISCATCoder.encodeMessage( "HELLO WORLD", 20 );   // <------ ISCAT message defined here.
+  jtISCATCoder.encodeMessage( "SP2ABC JO93GB", 20 );   // <------ ISCAT message defined here.
 }
 
 
@@ -197,11 +218,7 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
   Wire.begin();
-
-#ifdef TIME_SLICE_GPS
-  gpsSerial.begin(9600);
-#endif
-
+  
   pinMode(pinLED, OUTPUT);
 
   switchRealyToBand(FILTER_BAND_None);
@@ -388,7 +405,7 @@ void processTerminalCommands()
     time.day = params[2];
     time.month = params[1];
     time.year = params[0] % 100;
-    Ds3231::setTime(time);
+     Ds3231::setTime(time);
 
     Serial.print(F("\nDate updated\n"));
 
@@ -480,10 +497,10 @@ void processTerminalCommands()
     }
     
   }
-  else if( commandBuffer.startsWith(F("temperature")) )
+  else if( commandBuffer.startsWith(F("temp")) )
   {
     int16_t temperature = Ds3231::getTemperature();
-    Serial.print(F("Temperature="));
+    Serial.print(F("Temperature = "));
     Serial.print(temperature);
     Serial.print(F(" C"));
     Serial.println();
@@ -514,6 +531,14 @@ void printTime(bool includeLaunchTime)
   }
 
   Serial.print(F("\n"));
+}
+void printTemp()
+{
+int16_t temperature = Ds3231::getTemperature();
+    Serial.print(F("Temperature = "));
+    Serial.print(temperature);
+    Serial.print(F(" C"));
+    Serial.print(F("\n"));
 }
 
 //--------------------------------------------------
@@ -547,6 +572,7 @@ void printBandInfo()
     Serial.print((int)jtmode);  
   }
 
+  
   Serial.print(F("; F="));
   Serial.print(bandParams.approxFrequencyInMHz());
   Serial.print(F(" MHz"));
@@ -555,15 +581,7 @@ void printBandInfo()
   Serial.print(F("\n"));
 }
 
-//--------------------------------------------------
-void printTemp()
-{
-    int16_t temperature = Ds3231::getTemperature();
-    Serial.print(F("Temperature="));
-    Serial.print(temperature);
-    Serial.print(F(" C"));
-    Serial.print(F("\n"));
-}
+
 //----------------------------------------------------------
 void setSymbol(unsigned symbol)
 {
@@ -779,5 +797,4 @@ void deactivate_ptt()
   
   // turn off ptt key here
 }
-
 
