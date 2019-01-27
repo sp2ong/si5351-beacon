@@ -8,7 +8,7 @@
  D5  
  D6  
  D7  
- D8  1pps input DS3231
+ D8  1pps input DS3231 pin SQW
  D9  
  D10  
  D11  
