@@ -19,7 +19,7 @@ Key features:
 * Support band-hopping with LPF auto selection.
 * Pin-compliant with QRP-LABS Arduino shield and relay-switch board.
 
-To configure base frequency, step of FSK manipulation, T/R interval, mode - please use javascript based configurator: http://ra9yer.blogspot.com/p/si5351-configurator.html or open local configurator : ./doc/band_configurator.html 
+To configure base frequency, step of FSK manipulation, T/R interval, mode - please use javascript based configurator: http://sp2ong.noip.pl/downloads/band_configurator.html or open local configurator : ./doc/band_configurator.html 
 
 The WSPR beacon message in defined directly  in the code in text form. Please use command-line utilities _jt65code_, _jt4code_,  _jt9code_ (included with WSJTX software) to generate symbol stream for these modes.
 
